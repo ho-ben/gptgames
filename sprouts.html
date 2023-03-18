@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprouts Game</title>
+  <style>
+    /* Add CSS styles here */
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #f0f0f0;
+}
+
+canvas {
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <script>
+    // Add JavaScript code here
+		  const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const initialNodes = 3;
+let nodes = [];
+let lines = [];
+let currentPlayer = 1;
+
+function drawNode(x, y, connections) {
+  ctx.beginPath();
+  ctx.arc(x, y, 10, 0, 2 * Math.PI);
+  ctx.fillStyle = connections === 3 ? 'red' : 'black';
+  ctx.fill();
+  ctx.font = '12px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(connections, x, y);
+}
+
+
+function drawLine(x1, y1, x2, y2, color = 'black') {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.stroke();
+}
+
+function distance(x1, y1, x2, y2) {
+  return Math.hypot(x2 - x1, y2 - y1);
+}
+
+function addNode(x, y) {
+  nodes.push({ x, y, connections: 0 });
+  drawNode(x, y, 0);
+}
+
+function addLine(x1, y1, x2, y2) {
+  lines.push([x1, y1, x2, y2]);
+  drawLine(x1, y1, x2, y2);
+}
+
+// Initialize the starting nodes
+for (let i = 0; i < initialNodes; i++) {
+  addNode(Math.random() * (canvas.width - 20) + 10, Math.random() * (canvas.height - 20) + 10);
+}
+
+canvas.addEventListener('mousedown', (event) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  for (const node of nodes) {
+    if (distance(x, y, node.x, node.y) <= 10) {
+      if (node.connections < 3) {
+        node.selected = true;
+      }
+      break;
+    }
+  }
+});
+
+
+canvas.addEventListener('mousemove', (event) => {
+  if (!selectedNode) return;
+
+  // Clear the entire canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Redraw all existing nodes and lines
+  for (const line of lines) {
+    drawLine(line.x1, line.y1, line.x2, line.y2);
+  }
+
+  for (const node of nodes) {
+    drawNode(node.x, node.y, node.connections);
+  }
+
+  // Draw a temporary line from the selected node to the current mouse position with a different color
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  drawLine(selectedNode.x, selectedNode.y, x, y, 'gray'); // Change 'gray' to any suitable color
+});
+
+
+
+canvas.addEventListener('mouseup', (event) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  for (const node of nodes) {
+    if (node.selected) {
+      let found = false;
+      for (const other of nodes) {
+        if (other !== node && distance(x, y, other.x, other.y) <= 10 && other.connections < 3) {
+          addLine(node.x, node.y, other.x, other.y);
+          const newNodeX = (node.x + other.x) / 2;
+          const newNodeY = (node.y + other.y) / 2;
+          addNode(newNodeX, newNodeY);
+
+          node.connections++;
+          other.connections++;
+          nodes[nodes.length - 1].connections = 2;
+
+          currentPlayer = 3 - currentPlayer;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        drawNode(node.x, node.y, node.connections);
+      }
+
+      node.selected = false;
+      break;
+    }
+  }
+});
+
+
+
+  </script>
+</body>
+</html>
+<!-- https://poe.com/s/GCqEx8StptGc3y8xFY1s -->
