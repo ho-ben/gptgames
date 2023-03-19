@@ -68,6 +68,14 @@ function addLine(x1, y1, x2, y2) {
   drawLine(x1, y1, x2, y2);
 }
 
+function getTouchCoordinates(event) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = event.touches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  return { x, y };
+}
+
 // Initialize the starting nodes
 for (let i = 0; i < initialNodes; i++) {
   addNode(Math.random() * (canvas.width - 20) + 10, Math.random() * (canvas.height - 20) + 10);
@@ -87,6 +95,23 @@ canvas.addEventListener('mousedown', (event) => {
     }
   }
 });
+
+canvas.addEventListener('touchstart', (event) => {
+  event.preventDefault();
+  const { x, y } = getTouchCoordinates(event);
+
+  // ... (rest of the existing mousedown code)
+
+  for (const node of nodes) {
+    if (distance(x, y, node.x, node.y) <= 10) {
+      if (node.connections < 3) {
+        node.selected = true;
+      }
+      break;
+    }
+  }
+});
+
 
 
 canvas.addEventListener('mousemove', (event) => {
@@ -111,6 +136,30 @@ canvas.addEventListener('mousemove', (event) => {
   drawLine(selectedNode.x, selectedNode.y, x, y, 'gray'); // Change 'gray' to any suitable color
 });
 
+
+canvas.addEventListener('touchmove', (event) => {
+  event.preventDefault();
+  if (!selectedNode) return;
+
+  const { x, y } = getTouchCoordinates(event);
+  // ... (rest of the existing mousemove code)
+  if (!selectedNode) return;
+
+  // Clear the entire canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Redraw all existing nodes and lines
+  for (const line of lines) {
+    drawLine(line.x1, line.y1, line.x2, line.y2);
+  }
+
+  for (const node of nodes) {
+    drawNode(node.x, node.y, node.connections);
+  }
+
+  // Draw a temporary line from the selected node to the current mouse position with a different color
+  drawLine(selectedNode.x, selectedNode.y, x, y, 'gray'); // Change 'gray' to any suitable color
+});
 
 
 canvas.addEventListener('mouseup', (event) => {
@@ -148,6 +197,42 @@ canvas.addEventListener('mouseup', (event) => {
   }
 });
 
+canvas.addEventListener('touchend', (event) => {
+  event.preventDefault();
+  // ... (rest of the existing mouseup code)
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  for (const node of nodes) {
+    if (node.selected) {
+      let found = false;
+      for (const other of nodes) {
+        if (other !== node && distance(x, y, other.x, other.y) <= 10 && other.connections < 3) {
+          addLine(node.x, node.y, other.x, other.y);
+          const newNodeX = (node.x + other.x) / 2;
+          const newNodeY = (node.y + other.y) / 2;
+          addNode(newNodeX, newNodeY);
+
+          node.connections++;
+          other.connections++;
+          nodes[nodes.length - 1].connections = 2;
+
+          currentPlayer = 3 - currentPlayer;
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        drawNode(node.x, node.y, node.connections);
+      }
+
+      node.selected = false;
+      break;
+    }
+  }
+});
 
 
   </script>
