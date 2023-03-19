@@ -32,6 +32,7 @@ const initialNodes = 3;
 let nodes = [];
 let lines = [];
 let currentPlayer = 1;
+let selectedNode;
 
 function drawNode(x, y, connections) {
   ctx.beginPath();
@@ -52,6 +53,12 @@ function drawLine(x1, y1, x2, y2, color = 'black') {
   ctx.lineTo(x2, y2);
   ctx.strokeStyle = color;
   ctx.stroke();
+}
+
+function isPointInsideCircle(x, y, centerX, centerY, radius) {
+  const dx = x - centerX;
+  const dy = y - centerY;
+  return dx * dx + dy * dy <= radius * radius;
 }
 
 function distance(x1, y1, x2, y2) {
@@ -90,6 +97,7 @@ canvas.addEventListener('mousedown', (event) => {
     if (distance(x, y, node.x, node.y) <= 10) {
       if (node.connections < 3) {
         node.selected = true;
+		selectedNode = node;
       }
       break;
     }
@@ -106,6 +114,7 @@ canvas.addEventListener('touchstart', (event) => {
     if (distance(x, y, node.x, node.y) <= 10) {
       if (node.connections < 3) {
         node.selected = true;
+		selectedNode = node;
       }
       break;
     }
@@ -121,8 +130,9 @@ canvas.addEventListener('mousemove', (event) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Redraw all existing nodes and lines
-  for (const line of lines) {
-    drawLine(line.x1, line.y1, line.x2, line.y2);
+  for (line of lines) {
+    //drawLine(line.x1, line.y1, line.x2, line.y2, 'black');
+    drawLine(line[0], line[1], line[2], line[3], 'black');
   }
 
   for (const node of nodes) {
@@ -133,7 +143,7 @@ canvas.addEventListener('mousemove', (event) => {
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
-  drawLine(selectedNode.x, selectedNode.y, x, y, 'gray'); // Change 'gray' to any suitable color
+  drawLine(selectedNode.x, selectedNode.y, x, y, 'green'); // Change 'gray' to any suitable color
 });
 
 
@@ -149,7 +159,7 @@ canvas.addEventListener('touchmove', (event) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Redraw all existing nodes and lines
-  for (const line of lines) {
+  for (line of lines) {
     drawLine(line.x1, line.y1, line.x2, line.y2);
   }
 
@@ -183,6 +193,7 @@ canvas.addEventListener('mouseup', (event) => {
 
           currentPlayer = 3 - currentPlayer;
           found = true;
+		  selectedNode = false;
           break;
         }
       }
